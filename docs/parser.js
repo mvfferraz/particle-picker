@@ -135,16 +135,28 @@ class ParticleStatistics {
         if (this.particles.length === 0) return null;
         
         const firstParticle = this.particles[0];
-        const possibleCols = ['MicrographName', 'micrograph', 'image', 'ImageName'];
+        const possibleCols = [
+            'MicrographName', 
+            'Micrographs Filename',
+            'micrograph', 
+            'image', 
+            'ImageName',
+            '_rlnMicrographName',
+            'rlnMicrographName'
+        ];
         
         for (const col of possibleCols) {
             if (firstParticle.hasOwnProperty(col)) {
+                console.log('Using micrograph column:', col);
                 return col;
             }
         }
         
         for (const key in firstParticle) {
-            if (key.toLowerCase().includes('micrograph') || key.toLowerCase().includes('image')) {
+            if (key.toLowerCase().includes('micrograph') || 
+                key.toLowerCase().includes('image') ||
+                key.toLowerCase().includes('filename')) {
+                console.log('Auto-detected micrograph column:', key);
                 return key;
             }
         }
@@ -190,18 +202,34 @@ class ParticleStatistics {
     }
     
     getCoordinates() {
-        const xCols = ['CoordinateX', 'x', 'X'];
-        const yCols = ['CoordinateY', 'y', 'Y'];
+        const xCols = ['CoordinateX', 'x', 'X', 'X-Coordinate', '_rlnCoordinateX', 'rlnCoordinateX', 'pos_x', 'posX', 'x_coord'];
+        const yCols = ['CoordinateY', 'y', 'Y', 'Y-Coordinate', '_rlnCoordinateY', 'rlnCoordinateY', 'pos_y', 'posY', 'y_coord'];
         
         let xCol = null, yCol = null;
         
         if (this.particles.length > 0) {
             const firstParticle = this.particles[0];
+            const availableColumns = Object.keys(firstParticle);
+            
+            console.log('Available columns in data:', availableColumns);
             
             for (const col of xCols) {
                 if (firstParticle.hasOwnProperty(col)) {
                     xCol = col;
                     break;
+                }
+            }
+            
+            if (!xCol) {
+                for (const col of availableColumns) {
+                    if (col.toLowerCase().includes('x') && 
+                        (col.toLowerCase().includes('coord') || 
+                         col.toLowerCase().includes('pos') ||
+                         col === 'x' || col === 'X')) {
+                        xCol = col;
+                        console.log('Auto-detected X column:', col);
+                        break;
+                    }
                 }
             }
             
@@ -211,9 +239,29 @@ class ParticleStatistics {
                     break;
                 }
             }
+            
+            if (!yCol) {
+                for (const col of availableColumns) {
+                    if (col.toLowerCase().includes('y') && 
+                        (col.toLowerCase().includes('coord') || 
+                         col.toLowerCase().includes('pos') ||
+                         col === 'y' || col === 'Y')) {
+                        yCol = col;
+                        console.log('Auto-detected Y column:', col);
+                        break;
+                    }
+                }
+            }
+            
+            console.log('Using X column:', xCol);
+            console.log('Using Y column:', yCol);
         }
         
-        if (!xCol || !yCol) return null;
+        if (!xCol || !yCol) {
+            console.warn('Could not find coordinate columns. Available columns:', 
+                        this.particles.length > 0 ? Object.keys(this.particles[0]) : 'none');
+            return null;
+        }
         
         return {
             x: this.particles.map(p => p[xCol]).filter(v => v !== undefined && !isNaN(v)),
