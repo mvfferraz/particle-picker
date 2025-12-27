@@ -1,6 +1,6 @@
 # Particle Picker Statistics Dashboard
 
-Professional dashboard and CLI for analyzing cryo-EM particle picking results.
+Dashboard and CLI for analyzing cryo-EM particle picking results.
 
 **Author:** Matheus Ferraz | **License:** MIT
 
