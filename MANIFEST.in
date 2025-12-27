@@ -1,0 +1,18 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include requirements.txt
+include requirements-dev.txt
+
+recursive-include tests *.py
+recursive-include particle_picker *.py
+recursive-include docs *.md *.rst
+
+exclude .gitignore
+exclude Makefile
+exclude setup.sh
+
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.so
+global-exclude .DS_Store
