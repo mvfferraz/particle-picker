@@ -5,41 +5,49 @@ class ParticleParser {
         
         const particles = [];
         let inParticlesSection = false;
+        let inLoop = false;
         let headers = [];
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             
-            if (line === 'data_particles') {
+            if (line.startsWith('data_particles')) {
                 inParticlesSection = true;
+                inLoop = false;
+                headers = [];
                 continue;
             }
             
             if (inParticlesSection && line === 'loop_') {
+                inLoop = true;
                 continue;
             }
             
-            if (inParticlesSection && line.startsWith('_rln')) {
-                const header = line.split('#')[0].trim();
-                const cleanHeader = header.replace('_rln', '');
-                headers.push(cleanHeader);
+            if (inParticlesSection && inLoop && line.startsWith('_rln')) {
+                const headerMatch = line.match(/^(_rln\w+)/);
+                if (headerMatch) {
+                    const header = headerMatch[1].replace('_rln', '');
+                    headers.push(header);
+                }
                 continue;
             }
             
-            if (inParticlesSection && headers.length > 0 && !line.startsWith('_') && !line.startsWith('data_')) {
-                const values = line.split(/\s+/);
+            if (inParticlesSection && headers.length > 0 && !line.startsWith('_') && !line.startsWith('data_') && !line.startsWith('loop_')) {
+                const values = line.split(/\s+/).filter(v => v.length > 0);
                 
-                if (values.length === headers.length) {
+                if (values.length >= headers.length) {
                     const particle = {};
                     headers.forEach((header, idx) => {
-                        const value = values[idx];
-                        particle[header] = isNaN(value) ? value : parseFloat(value);
+                        if (idx < values.length) {
+                            const value = values[idx];
+                            particle[header] = isNaN(value) ? value : parseFloat(value);
+                        }
                     });
                     particles.push(particle);
                 }
             }
             
-            if (line.startsWith('data_') && line !== 'data_particles') {
+            if (inParticlesSection && line.startsWith('data_') && !line.startsWith('data_particles')) {
                 break;
             }
         }
