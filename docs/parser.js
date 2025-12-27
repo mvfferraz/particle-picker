@@ -1,17 +1,25 @@
 class ParticleParser {
     
     static parseStarFile(content) {
-        const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+        console.log('Starting STAR file parsing...');
+        console.log('File length:', content.length, 'characters');
+        
+        const lines = content.split('\n').map(line => line.trim());
+        console.log('Total lines:', lines.length);
         
         const particles = [];
         let inParticlesSection = false;
         let inLoop = false;
         let headers = [];
+        let dataLineCount = 0;
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             
-            if (line.startsWith('data_particles')) {
+            if (line.length === 0) continue;
+            
+            if (line === 'data_particles' || line.startsWith('data_particles')) {
+                console.log('Found data_particles at line', i);
                 inParticlesSection = true;
                 inLoop = false;
                 headers = [];
@@ -19,37 +27,62 @@ class ParticleParser {
             }
             
             if (inParticlesSection && line === 'loop_') {
+                console.log('Found loop_ at line', i);
                 inLoop = true;
                 continue;
             }
             
             if (inParticlesSection && inLoop && line.startsWith('_rln')) {
-                const headerMatch = line.match(/^(_rln\w+)/);
-                if (headerMatch) {
-                    const header = headerMatch[1].replace('_rln', '');
-                    headers.push(header);
+                const parts = line.split(/\s+/);
+                const headerName = parts[0].replace('_rln', '');
+                headers.push(headerName);
+                if (headers.length === 1) {
+                    console.log('First header:', headerName);
                 }
                 continue;
             }
             
-            if (inParticlesSection && headers.length > 0 && !line.startsWith('_') && !line.startsWith('data_') && !line.startsWith('loop_')) {
-                const values = line.split(/\s+/).filter(v => v.length > 0);
-                
-                if (values.length >= headers.length) {
-                    const particle = {};
-                    headers.forEach((header, idx) => {
-                        if (idx < values.length) {
-                            const value = values[idx];
-                            particle[header] = isNaN(value) ? value : parseFloat(value);
+            if (inParticlesSection && headers.length > 0) {
+                if (!line.startsWith('_') && !line.startsWith('data_') && !line.startsWith('loop_') && !line.startsWith('#')) {
+                    const values = line.split(/\s+/).filter(v => v.length > 0);
+                    
+                    if (values.length >= headers.length) {
+                        const particle = {};
+                        headers.forEach((header, idx) => {
+                            if (idx < values.length) {
+                                const value = values[idx];
+                                particle[header] = isNaN(value) ? value : parseFloat(value);
+                            }
+                        });
+                        particles.push(particle);
+                        dataLineCount++;
+                        
+                        if (dataLineCount === 1) {
+                            console.log('First particle:', particle);
                         }
-                    });
-                    particles.push(particle);
+                    }
                 }
             }
             
-            if (inParticlesSection && line.startsWith('data_') && !line.startsWith('data_particles')) {
+            if (inParticlesSection && line.startsWith('data_') && line !== 'data_particles') {
+                console.log('End of particles section at line', i);
                 break;
             }
+        }
+        
+        console.log('Headers found:', headers.length, 'headers');
+        console.log('Header names:', headers.slice(0, 5), '...');
+        console.log('Total particles parsed:', particles.length);
+        
+        if (particles.length === 0) {
+            console.error('ERROR: No particles found!');
+            console.log('Debug info:');
+            console.log('- inParticlesSection was set:', inParticlesSection);
+            console.log('- headers array length:', headers.length);
+            console.log('- First 20 lines of file:');
+            lines.slice(0, 20).forEach((line, i) => {
+                console.log(`  ${i}: "${line}"`);
+            });
         }
         
         return particles;
