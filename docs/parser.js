@@ -202,9 +202,9 @@ class ParticleStatistics {
     }
     
     getCoordinates() {
-        const xCols = ['CoordinateX', 'x', 'X', 'X-Coordinate', '_rlnCoordinateX', 'rlnCoordinateX', 'pos_x', 'posX', 'x_coord'];
-        const yCols = ['CoordinateY', 'y', 'Y', 'Y-Coordinate', '_rlnCoordinateY', 'rlnCoordinateY', 'pos_y', 'posY', 'y_coord'];
-        
+        const xCols = ['X-Coordinate', 'CoordinateX', 'x', 'X', '_rlnCoordinateX', 'rlnCoordinateX', 'pos_x', 'posX', 'x_coord'];
+        const yCols = ['Y-Coordinate', 'CoordinateY', 'y', 'Y', '_rlnCoordinateY', 'rlnCoordinateY', 'pos_y', 'posY', 'y_coord'];
+
         let xCol = null, yCol = null;
         
         if (this.particles.length > 0) {
